@@ -15,7 +15,6 @@ export default [
     },
     plugins: { import: importPlugin },
   },
-  ...compat.extends('airbnb-base'),
   {
     rules: {
       'import/extensions': [
