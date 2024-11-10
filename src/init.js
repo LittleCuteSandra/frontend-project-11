@@ -1,8 +1,11 @@
 import onChange from 'on-change';
-//import i18next from 'i18next';
+import i18next, { getFixedT } from 'i18next';
 import * as yup from 'yup';
+import axios from 'axios';
 
 import render from './view.js';
+import resources from './locale/index.js';
+import parse from './parser.js';
 
 const validateURL = (url, addedURL) => {
   let schema = yup.object({
@@ -11,12 +14,36 @@ const validateURL = (url, addedURL) => {
   return schema.validate({ url });
 };
 
+const createi18nInstance = () => {
+  const i18nInstance = i18next.createInstance();
+  i18nInstance.init({
+    lng: 'ru',
+    debug: false,
+    resources,
+  });
+  return i18nInstance;
+};
+
+const createErri18nInstance = () => {
+  yup.setLocale({
+    mixed: {
+      default: 'unknownErr',
+    },
+    string: {
+      url: 'notValidLinkErr',
+      required: 'emptyFieldErr',
+      notOneOf: 'existRSSErr',
+    },
+  });
+};
+
 const runApp = () => {
   const state = {
     feeds: [], // фиды
     posts: [], // посты
     form: { // состояние формы
       isValid: true,
+      error: '',
     },
     loadingProcess: { // состояние процесса загрузки
       status: '', // success, fail, loading
@@ -28,16 +55,19 @@ const runApp = () => {
     },
   };
 
-  // создание экземпляра i18next
-  //const i18nextInstance = i18next.createInstance();
-  //await i18nextInstance.init({
-    //lng: 'ru',
-    //resources: /* переводы */
-  //});
+  const i18nextInstance = createi18nInstance();
+  createErri18nInstance();
 
-
-  const watchedState = onChange(state, () => {
-    render(state);
+  const watchedState = onChange(state, (path, value) => {
+    //if (path === 'registrationForm.state') {
+      //if (value === 'invalid') {
+        // Отрисовка ошибок, хранящихся где-то в состоянии
+        // watchedState.registrationForm.errors
+      //}
+    //}
+    // РАЗГРУЗИТЬ РЕНДЕР, ЧТОБЫ ОН КАЖДЫЙ РАЗ ВСЮ СТРАНИЦУ НЕ РЕНДЕРИЛ, А ТОЛЬКО НУЖНЫЕ КУСКИ
+    // можно передавать в рендер часть, которая изменилась(её название), и в функции рендера сделать разделение на изменение этих кусков
+    render(state, i18nextInstance);
   });
 
   const form = document.querySelector('form');
@@ -48,12 +78,28 @@ const runApp = () => {
     const url = formData.get('url');
     const addedFeeds = state.feeds.map((feed) => feed.url);
     validateURL(url, addedFeeds)
-      .then(() => {
-        watchedState.feeds.push({url: url});
+      .then(() => axios.get(`https://allorigins.hexlet.app/get?url=${encodeURIComponent(url)}&disableCache=true`))
+      .then((response) => {
+        const parseData = parse(response.data.contents);
+        // раздать всем id и фидам(id) и постам(id, feedid)
+        const feed = {
+          id: state.feeds.length + 1,
+          title: parseData.title,
+          description: parseData.description,
+        };
+        const posts = parseData.posts.map((post) => {
+          const id = state.posts.length + 1;
+          const feedID = state.feeds.length + 1;
+          return {id, ...post, feedID};
+        });
+        watchedState.feeds.push(feed);
+        watchedState.posts = [...watchedState.posts, ...posts];
         watchedState.form.isValid = true;
       })
-      .catch((error) => {
+      .catch((err) => {
         watchedState.form.isValid = false;
+        console.log('err = ', err);
+        //watchedState.form.error = err.errors[0];
       });
   });
 };
