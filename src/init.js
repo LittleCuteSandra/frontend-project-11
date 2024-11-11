@@ -1,5 +1,5 @@
 import onChange from 'on-change';
-import i18next, { getFixedT } from 'i18next';
+import i18next from 'i18next';
 import * as yup from 'yup';
 import axios from 'axios';
 
@@ -81,24 +81,23 @@ const runApp = () => {
       .then(() => axios.get(`https://allorigins.hexlet.app/get?url=${encodeURIComponent(url)}&disableCache=true`))
       .then((response) => {
         const parseData = parse(response.data.contents);
-        // раздать всем id и фидам(id) и постам(id, feedid)
         const feed = {
           id: state.feeds.length + 1,
           title: parseData.title,
           description: parseData.description,
         };
-        const posts = parseData.posts.map((post) => {
-          const id = state.posts.length + 1;
+        const posts = parseData.posts.map((post, index) => {
+          const id = state.posts.length + index + 1;
           const feedID = state.feeds.length + 1;
-          return {id, ...post, feedID};
+          return { id, ...post, feedID };
         });
         watchedState.feeds.push(feed);
-        watchedState.posts = [...watchedState.posts, ...posts];
+        watchedState.posts = [...state.posts, ...posts];
         watchedState.form.isValid = true;
       })
       .catch((err) => {
         watchedState.form.isValid = false;
-        console.log('err = ', err);
+        console.log(err);
         //watchedState.form.error = err.errors[0];
       });
   });
