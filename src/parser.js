@@ -25,7 +25,7 @@ const parse = (data) => {
   }
   const title = xmlDoc.querySelector('title').textContent;
   const description = xmlDoc.querySelector('description').textContent;
-  console.log(typeof xmlDoc.querySelectorAll('item'), xmlDoc.querySelectorAll('item')[0]);
+  //console.log(typeof xmlDoc.querySelectorAll('item'), xmlDoc.querySelectorAll('item')[0]);
   const posts = parsePosts(xmlDoc.querySelectorAll('item'));
   return {
     title,
