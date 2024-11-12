@@ -16,10 +16,10 @@ const renderShell = (title) => {
 
   card.prepend(cardBody);
 
-  const ulPosts = document.createElement('ul');
-  ulPosts.classList.add('list-group', 'border-0', 'rounded-0');
+  const ul = document.createElement('ul');
+  ul.classList.add('list-group', 'border-0', 'rounded-0');
 
-  card.append(ulPosts);
+  card.append(ul);
   return card;
 };
 
@@ -35,7 +35,7 @@ const setPostAsViewed = (id) => {
   a.classList.add('fw-normal', 'link-secondary');
 };
 
-const renderPosts = (posts, state) => {
+const renderPosts = (posts, state, i18nI) => {
   const ulPosts = document.querySelectorAll('ul')[domUlNumber.postsUl];
   ulPosts.textContent = '';
   posts.forEach((post) => {
@@ -56,13 +56,17 @@ const renderPosts = (posts, state) => {
     button.dataset.id = post.id;
     button.dataset.bsToggle = 'modal';
     button.dataset.bsTarget = '#modal';
-    button.textContent = 'Просмотр';
+    button.textContent = i18nI.t('titleView');
 
-    li.addEventListener('click', (event) => {
-      event.preventDefault();
-      if (event.target.tagName === 'BUTTON') {
-        setModal(post);
+    button.addEventListener('click', (event) => {
+      setModal(post);
+      if (!state.ui.seenPosts.includes(post.id)) {
+        state.ui.seenPosts.push(post.id);
       }
+      setPostAsViewed(event.target.dataset.id);
+    });
+
+    a.addEventListener('click', (event) => {
       if (!state.ui.seenPosts.includes(post.id)) {
         state.ui.seenPosts.push(post.id);
       }
@@ -72,6 +76,10 @@ const renderPosts = (posts, state) => {
     li.append(a, button);
 
     ulPosts.append(li);
+
+    if (state.ui.seenPosts.includes(post.id)) {
+      setPostAsViewed(post.id);
+    }
   });
 };
 
@@ -102,20 +110,25 @@ const render = (state, i18nI) => {
   feedback.textContent = '';
   if (!state.form.isValid) {
     input.classList.add('is-invalid');
+    feedback.classList.add('text-danger');
+    feedback.classList.remove('text-success');
     feedback.textContent = i18nI.t(`${state.form.error}`);
   } else {
     input.classList.remove('is-invalid');
+    feedback.classList.remove('text-danger');
+    feedback.classList.add('text-success');
+    feedback.textContent = i18nI.t('successRSS');
     if (!document.querySelector('.posts').hasChildNodes()) {
-      const postsCard = renderShell('Посты');
+      const postsCard = renderShell(i18nI.t('titlePosts'));
       document.querySelector('.posts').append(postsCard);
     }
     if (!document.querySelector('.feeds').hasChildNodes()) {
-      const feedsCard = renderShell('Фиды');
+      const feedsCard = renderShell(i18nI.t('titleFeeds'));
       document.querySelector('.feeds').append(feedsCard);
     }
-    renderPosts(state.posts, state);
+    renderPosts(state.posts, state, i18nI);
     renderFeeds(state.feeds);
-    console.log(state);
+    //console.log(state);
     input.value = '';
     input.focus();
   }

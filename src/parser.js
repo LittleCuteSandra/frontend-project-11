@@ -20,14 +20,16 @@ const parse = (data) => {
 
   const error = xmlDoc.querySelector('parsererror');
   if (error) {
-    // КАК ТО ПО ДРУГОМУ ОФОРМИТЬ ОТВЕТ
-    return error.textContent;
+    return {
+      parsed: false,
+      errName: 'notValidRSSErr',
+    };
   }
   const title = xmlDoc.querySelector('title').textContent;
   const description = xmlDoc.querySelector('description').textContent;
-  //console.log(typeof xmlDoc.querySelectorAll('item'), xmlDoc.querySelectorAll('item')[0]);
   const posts = parsePosts(xmlDoc.querySelectorAll('item'));
   return {
+    parsed: true,
     title,
     description,
     posts,

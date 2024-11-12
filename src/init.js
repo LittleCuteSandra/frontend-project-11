@@ -39,18 +39,16 @@ const createErri18nInstance = () => {
 
 const runApp = () => {
   const state = {
-    feeds: [], // фиды
-    posts: [], // посты
-    form: { // состояние формы
+    feeds: [],
+    posts: [],
+    form: {
       isValid: true,
       error: '',
     },
     loadingProcess: { // состояние процесса загрузки
       status: '', // success, fail, loading
-      //errors: ['Имя не заполнено', 'Адрес имеет неверный формат'],
-      // validationState: 'invalid' // или valid
     },
-    ui: { // состояние интерфейса
+    ui: {
       seenPosts: [],
     },
   };
@@ -58,15 +56,7 @@ const runApp = () => {
   const i18nextInstance = createi18nInstance();
   createErri18nInstance();
 
-  const watchedState = onChange(state, (path, value) => {
-    //if (path === 'registrationForm.state') {
-      //if (value === 'invalid') {
-        // Отрисовка ошибок, хранящихся где-то в состоянии
-        // watchedState.registrationForm.errors
-      //}
-    //}
-    // РАЗГРУЗИТЬ РЕНДЕР, ЧТОБЫ ОН КАЖДЫЙ РАЗ ВСЮ СТРАНИЦУ НЕ РЕНДЕРИЛ, А ТОЛЬКО НУЖНЫЕ КУСКИ
-    // можно передавать в рендер часть, которая изменилась(её название), и в функции рендера сделать разделение на изменение этих кусков
+  const watchedState = onChange(state, () => {
     render(state, i18nextInstance);
   });
 
@@ -81,24 +71,43 @@ const runApp = () => {
       .then(() => axios.get(`https://allorigins.hexlet.app/get?url=${encodeURIComponent(url)}&disableCache=true`))
       .then((response) => {
         const parseData = parse(response.data.contents);
-        const feed = {
-          id: state.feeds.length + 1,
-          title: parseData.title,
-          description: parseData.description,
-        };
-        const posts = parseData.posts.map((post, index) => {
-          const id = state.posts.length + index + 1;
-          const feedID = state.feeds.length + 1;
-          return { id, ...post, feedID };
-        });
-        watchedState.feeds.push(feed);
-        watchedState.posts = [...state.posts, ...posts];
-        watchedState.form.isValid = true;
+        if (!parseData.parsed) {
+          watchedState.form.error = parseData.errName;
+          watchedState.form.isValid = false;
+        } else {
+          const feed = {
+            id: state.feeds.length + 1,
+            title: parseData.title,
+            description: parseData.description,
+            url: url,
+          };
+          const posts = parseData.posts.map((post, index) => {
+            const id = state.posts.length + index + 1;
+            const feedID = state.feeds.length + 1;
+            return { id, ...post, feedID };
+          });
+          watchedState.feeds.push(feed);
+          watchedState.posts = [...state.posts, ...posts];
+          watchedState.form.isValid = true;
+        }
       })
       .catch((err) => {
         watchedState.form.isValid = false;
-        console.log(err);
-        //watchedState.form.error = err.errors[0];
+        switch (err.name) {
+          case 'AxiosError':
+            watchedState.form.error = 'networkErr';
+            break;
+          case 'ValidationError':
+            if (err.errors[0] === 'notValidLinkErr') {
+              watchedState.form.error = 'notValidLinkErr';
+            } else {
+              watchedState.form.error = 'existRSSErr';
+            }
+            break;
+          default: 
+            watchedState.form.error = 'unknownErr';
+            break;
+        }
       });
   });
 };
