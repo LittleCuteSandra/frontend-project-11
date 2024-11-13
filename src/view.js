@@ -3,6 +3,18 @@ const domUlNumber = {
   feedsUl: 1,
 };
 
+const checkLoadingProcess = (loadingStatus) => {
+  const input = document.querySelector('input');
+  const addButton = document.querySelector('button');
+  if (loadingStatus === 'loading') {
+    input.setAttribute('readonly', 'true');
+    addButton.classList.add('disabled');
+  } else {
+    input.removeAttribute('readonly');
+    addButton.classList.remove('disabled');
+  }
+};
+
 const renderShell = (title) => {
   const card = document.createElement('div');
   card.classList.add('card', 'border-0');
@@ -108,29 +120,37 @@ const render = (state, i18nI) => {
   const input = document.querySelector('input');
   const feedback = document.querySelector('.feedback');
   feedback.textContent = '';
-  if (!state.form.isValid) {
-    input.classList.add('is-invalid');
-    feedback.classList.add('text-danger');
-    feedback.classList.remove('text-success');
-    feedback.textContent = i18nI.t(`${state.form.error}`);
+  //checkLoadingProcess(state.loadingProcess.status);
+  const addButton = document.querySelector('button');
+  if (state.loadingProcess.status === 'loading') {
+    input.setAttribute('readonly', 'true');
+    addButton.classList.add('disabled');
   } else {
-    input.classList.remove('is-invalid');
-    feedback.classList.remove('text-danger');
-    feedback.classList.add('text-success');
-    feedback.textContent = i18nI.t('successRSS');
-    if (!document.querySelector('.posts').hasChildNodes()) {
-      const postsCard = renderShell(i18nI.t('titlePosts'));
-      document.querySelector('.posts').append(postsCard);
+    input.removeAttribute('readonly');
+    addButton.classList.remove('disabled');
+    if (!state.form.isValid) {
+      input.classList.add('is-invalid');
+      feedback.classList.add('text-danger');
+      feedback.classList.remove('text-success');
+      feedback.textContent = i18nI.t(`${state.form.error}`);
+    } else {
+      input.classList.remove('is-invalid');
+      feedback.classList.remove('text-danger');
+      feedback.classList.add('text-success');
+      feedback.textContent = i18nI.t('successRSS');
+      if (!document.querySelector('.posts').hasChildNodes()) {
+        const postsCard = renderShell(i18nI.t('titlePosts'));
+        document.querySelector('.posts').append(postsCard);
+      }
+      if (!document.querySelector('.feeds').hasChildNodes()) {
+        const feedsCard = renderShell(i18nI.t('titleFeeds'));
+        document.querySelector('.feeds').append(feedsCard);
+      }
+      renderPosts(state.posts, state, i18nI);
+      renderFeeds(state.feeds);
+      input.value = '';
+      input.focus();
     }
-    if (!document.querySelector('.feeds').hasChildNodes()) {
-      const feedsCard = renderShell(i18nI.t('titleFeeds'));
-      document.querySelector('.feeds').append(feedsCard);
-    }
-    renderPosts(state.posts, state, i18nI);
-    renderFeeds(state.feeds);
-    //console.log(state);
-    input.value = '';
-    input.focus();
   }
 };
 
