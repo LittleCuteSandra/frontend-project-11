@@ -3,7 +3,7 @@ const domUlNumber = {
   feedsUl: 1,
 };
 
-const checkLoadingProcess = (loadingStatus) => {
+/*const checkLoadingProcess = (loadingStatus) => {
   const input = document.querySelector('input');
   const addButton = document.querySelector('button');
   if (loadingStatus === 'loading') {
@@ -13,7 +13,7 @@ const checkLoadingProcess = (loadingStatus) => {
     input.removeAttribute('readonly');
     addButton.classList.remove('disabled');
   }
-};
+};*/
 
 const renderShell = (title) => {
   const card = document.createElement('div');
@@ -116,33 +116,50 @@ const renderFeeds = (feeds) => {
   });
 };
 
-const render = (state, i18nI) => {
+const render = (state, i18nI, path, value) => {
   const input = document.querySelector('input');
   const feedback = document.querySelector('.feedback');
   feedback.textContent = '';
-  //checkLoadingProcess(state.loadingProcess.status);
-  const addButton = document.querySelector('button');
+  /*switch (path) {
+    case 'form.isValid':
+
+      break;
+    case 'form.error':
+
+      break;
+    case 'loadingProcess.status':
+
+      break;
+  }*/
+  const addButton = document.querySelector('button[type="submit"]');
   if (state.loadingProcess.status === 'loading') {
     input.setAttribute('readonly', 'true');
     addButton.classList.add('disabled');
+    input.classList.remove('is-invalid');
+    //feedback.classList.remove('text-danger');
   } else {
     input.removeAttribute('readonly');
     addButton.classList.remove('disabled');
+    //console.log(state, path, value, ' = state, path, value', state.form.isValid, (!state.form.isValid));
+    //console.log(!state.form.isValid);
     if (!state.form.isValid) {
       input.classList.add('is-invalid');
       feedback.classList.add('text-danger');
       feedback.classList.remove('text-success');
       feedback.textContent = i18nI.t(`${state.form.error}`);
     } else {
+      //console.log(state, path, value, ' = state, path, value');
       input.classList.remove('is-invalid');
       feedback.classList.remove('text-danger');
       feedback.classList.add('text-success');
       feedback.textContent = i18nI.t('successRSS');
       if (!document.querySelector('.posts').hasChildNodes()) {
+        //console.log(' если нет постов ');
         const postsCard = renderShell(i18nI.t('titlePosts'));
         document.querySelector('.posts').append(postsCard);
       }
       if (!document.querySelector('.feeds').hasChildNodes()) {
+        //console.log(' если нет фидов ');
         const feedsCard = renderShell(i18nI.t('titleFeeds'));
         document.querySelector('.feeds').append(feedsCard);
       }
