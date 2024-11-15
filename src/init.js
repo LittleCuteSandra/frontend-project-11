@@ -7,6 +7,11 @@ import render from './view.js';
 import resources from './locale/index.js';
 import parse from './parser.js';
 
+const loadingStatus = {
+  LOADING: 'loading',
+  READY: 'ready',
+};
+
 const validateURL = (url, addedURL) => {
   let schema = yup.object({
     url: yup.string().url().required().notOneOf(addedURL),
@@ -37,44 +42,38 @@ const createErri18nInstance = () => {
   });
 };
 
-const updatePosts = (state, addedFeeds) => {
-  console.log(addedFeeds, '= state.feeds, addedFeeds');
-  const promises = state.feeds.map(({ url }) => {
-    const t = axios.get(`https://allorigins.hexlet.app/get?url=${encodeURIComponent(url)}&disableCache=true`);
-    console.log(t, '= axios');
-    return t;
+const getFeed = (feedsLength, parseData, url) => {
+  return {
+    id: feedsLength + 1,
+    title: parseData.title,
+    description: parseData.description,
+    url,
+  };
+};
+
+const getPosts = (parseData, state) => {
+  return parseData.map((post, index) => {
+    const id = state.posts.length + index + 1;
+    const feedID = state.feeds.length + 1;
+    return { id, ...post, feedID };
   });
-  console.log('прочитал promises = ', promises);
-  Promise.all(promises)
-    .then((responses) => {
-      console.log('responses', responses);
-      const parseFeedsData = responses.map((response) => parse(response.data.contents));
-      console.log('парсеры готовы', parseFeedsData);
-      parseFeedsData.forEach((parseFeedData) => {
-        if (!parseFeedData.parsed) {
-          state.form.error = parseFeedData.errName;
-          state.form.isValid = false;
-        } else {
-          const posts = parseFeedData.posts.map((post, index) => {
-            const id = state.posts.length + index + 1;
-            const feedID = state.feeds.length + 1;
-            return { id, ...post, feedID };
-          });
-          const statePostsID = state.posts.map(({ id }) => id);
-          console.log('statePostsID = ', statePostsID);
-          const newPosts = posts.filter((post) => !statePostsID.includes(post.id));
-          console.log('newPosts = ', newPosts);
-          state.posts = [...state.posts, ...newPosts];
-          // обязательно доьавить в стейт новые посты
-        }
-      });
-      console.log('куку');
-      setTimeout(() => updatePosts(state.feeds), 5000);
-    })
-    .catch((error) => {
-      console.log(error);
-      // по другому сделать вывод ошибки
-    });
+};
+
+const updatePosts = (state, interval = 5000) => {
+  setTimeout(() => {
+    const promises = state.feeds.map(({ url }) => axios.get(`https://allorigins.hexlet.app/get?url=${encodeURIComponent(url)}&disableCache=true`)
+      .then((response) => {
+        const parseFeedData = parse(response.data.contents).posts;
+        const statePostsID = state.posts.map(({ id }) => id);
+        const posts = getPosts(parseFeedData, state);
+        const newPosts = posts.filter(({ id }) => !statePostsID.includes(id));
+        state.posts = [...state.posts, ...newPosts];
+      })
+      .catch((err) => console.log(err))
+    );
+    Promise.all(promises)
+      .finally(() => updatePosts(state));
+  }, interval);
 };
 
 const runApp = () => {
@@ -85,8 +84,8 @@ const runApp = () => {
       isValid: true,
       error: '',
     },
-    loadingProcess: { // состояние процесса загрузки
-      status: '', // ready, loading
+    loadingProcess: {
+      status: '',
     },
     ui: {
       seenPosts: [],
@@ -96,16 +95,16 @@ const runApp = () => {
   const i18nextInstance = createi18nInstance();
   createErri18nInstance();
 
-  const watchedState = onChange(state, () => {
-    render(state, i18nextInstance);
+  const watchedState = onChange(state, (path, value) => {
+    render(state, i18nextInstance, path, value);
   });
 
   const form = document.querySelector('form');
 
   form.addEventListener('submit', (event) => {
     event.preventDefault();
-    watchedState.loadingProcess.status = 'loading';
-    const formData = new FormData(event.target); // formData содержит данные из формы, которая была отправлена
+    watchedState.loadingProcess.status = loadingStatus.LOADING;
+    const formData = new FormData(event.target);
     const url = formData.get('url');
     const addedFeeds = state.feeds.map((feed) => feed.url);
     validateURL(url, addedFeeds)
@@ -113,29 +112,22 @@ const runApp = () => {
       .then((response) => {
         const parseData = parse(response.data.contents);
         if (!parseData.parsed) {
-          watchedState.form.error = parseData.errName;
           watchedState.form.isValid = false;
+          watchedState.form.error = parseData.errName;
         } else {
-          const feed = {
-            id: state.feeds.length + 1,
-            title: parseData.title,
-            description: parseData.description,
-            url: url,
-          };
-          const posts = parseData.posts.map((post, index) => {
-            const id = state.posts.length + index + 1;
-            const feedID = state.feeds.length + 1;
-            return { id, ...post, feedID };
-          });
+          const feed = getFeed(state.feeds.length, parseData, url);
+          const posts = getPosts(parseData.posts, state);
           watchedState.feeds.push(feed);
           watchedState.posts = [...state.posts, ...posts];
           watchedState.form.isValid = true;
         }
-        watchedState.loadingProcess.status = 'ready';
+        watchedState.loadingProcess.status = loadingStatus.READY;
+        updatePosts(state);
       })
       .catch((err) => {
-        watchedState.loadingProcess.status = 'ready';
         watchedState.form.isValid = false;
+        watchedState.loadingProcess.status = loadingStatus.READY;
+        console.log(err);
         switch (err.name) {
           case 'AxiosError':
             watchedState.form.error = 'networkErr';
@@ -152,7 +144,6 @@ const runApp = () => {
             break;
         }
       });
-    updatePosts(state);
   });
 };
 
