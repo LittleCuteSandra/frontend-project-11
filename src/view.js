@@ -3,18 +3,6 @@ const domUlNumber = {
   feedsUl: 1,
 };
 
-/*const checkLoadingProcess = (loadingStatus) => {
-  const input = document.querySelector('input');
-  const addButton = document.querySelector('button');
-  if (loadingStatus === 'loading') {
-    input.setAttribute('readonly', 'true');
-    addButton.classList.add('disabled');
-  } else {
-    input.removeAttribute('readonly');
-    addButton.classList.remove('disabled');
-  }
-};*/
-
 const renderShell = (title) => {
   const card = document.createElement('div');
   card.classList.add('card', 'border-0');
@@ -47,9 +35,13 @@ const setPostAsViewed = (id) => {
   a.classList.add('fw-normal', 'link-secondary');
 };
 
-const renderPosts = (posts, state, i18nI) => {
+const renderPosts = (posts, seenPosts, i18nI) => {
+  document.querySelector('.posts').innerHTML = '';
+
+  const postsCard = renderShell(i18nI.t('titlePosts'));
+  document.querySelector('.posts').append(postsCard);
+
   const ulPosts = document.querySelectorAll('ul')[domUlNumber.postsUl];
-  ulPosts.textContent = '';
   posts.forEach((post) => {
     const li = document.createElement('li');
     li.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
@@ -72,15 +64,15 @@ const renderPosts = (posts, state, i18nI) => {
 
     button.addEventListener('click', (event) => {
       setModal(post);
-      if (!state.ui.seenPosts.includes(post.id)) {
-        state.ui.seenPosts.push(post.id);
+      if (!seenPosts.includes(post.id)) {
+        seenPosts.push(post.id);
       }
       setPostAsViewed(event.target.dataset.id);
     });
 
     a.addEventListener('click', (event) => {
-      if (!state.ui.seenPosts.includes(post.id)) {
-        state.ui.seenPosts.push(post.id);
+      if (!seenPosts.includes(post.id)) {
+        seenPosts.push(post.id);
       }
       setPostAsViewed(event.target.dataset.id);
     });
@@ -89,15 +81,19 @@ const renderPosts = (posts, state, i18nI) => {
 
     ulPosts.append(li);
 
-    if (state.ui.seenPosts.includes(post.id)) {
+    if (seenPosts.includes(post.id)) {
       setPostAsViewed(post.id);
     }
   });
 };
 
-const renderFeeds = (feeds) => {
+const renderFeeds = (feeds, i18nI) => {
+  document.querySelector('.feeds').innerHTML = '';
+
+  const feedsCard = renderShell(i18nI.t('titleFeeds'));
+  document.querySelector('.feeds').append(feedsCard);
+
   const ulFeeds = document.querySelectorAll('ul')[domUlNumber.feedsUl];
-  ulFeeds.textContent = '';
   feeds.forEach((feed) => {
     const li = document.createElement('li');
     li.classList.add('list-group-item', 'border-0', 'border-end-0');
@@ -116,58 +112,63 @@ const renderFeeds = (feeds) => {
   });
 };
 
-const render = (state, i18nI, path, value) => {
-  const input = document.querySelector('input');
-  const feedback = document.querySelector('.feedback');
-  feedback.textContent = '';
-  /*switch (path) {
-    case 'form.isValid':
-
-      break;
-    case 'form.error':
-
-      break;
-    case 'loadingProcess.status':
-
-      break;
-  }*/
-  const addButton = document.querySelector('button[type="submit"]');
-  if (state.loadingProcess.status === 'loading') {
-    input.setAttribute('readonly', 'true');
-    addButton.classList.add('disabled');
-    input.classList.remove('is-invalid');
-    //feedback.classList.remove('text-danger');
-  } else {
-    input.removeAttribute('readonly');
-    addButton.classList.remove('disabled');
-    //console.log(state, path, value, ' = state, path, value', state.form.isValid, (!state.form.isValid));
-    //console.log(!state.form.isValid);
-    if (!state.form.isValid) {
+const formValidityProcess = (value, input, feedback) => {
+  switch (value) {
+    case 'not valid':
       input.classList.add('is-invalid');
       feedback.classList.add('text-danger');
       feedback.classList.remove('text-success');
-      feedback.textContent = i18nI.t(`${state.form.error}`);
-    } else {
-      //console.log(state, path, value, ' = state, path, value');
+      break;
+    case 'valid':
       input.classList.remove('is-invalid');
       feedback.classList.remove('text-danger');
       feedback.classList.add('text-success');
-      feedback.textContent = i18nI.t('successRSS');
-      if (!document.querySelector('.posts').hasChildNodes()) {
-        //console.log(' если нет постов ');
-        const postsCard = renderShell(i18nI.t('titlePosts'));
-        document.querySelector('.posts').append(postsCard);
-      }
-      if (!document.querySelector('.feeds').hasChildNodes()) {
-        //console.log(' если нет фидов ');
-        const feedsCard = renderShell(i18nI.t('titleFeeds'));
-        document.querySelector('.feeds').append(feedsCard);
-      }
-      renderPosts(state.posts, state, i18nI);
-      renderFeeds(state.feeds);
       input.value = '';
       input.focus();
-    }
+      break;
+    default:
+      break;
+  }
+};
+
+const formloadingProcess = (value, feedback, input) => {
+  const addButton = document.querySelector('button[type="submit"]');
+  switch (value) {
+    case 'loading':
+      feedback.textContent = '';
+      input.setAttribute('readonly', 'true');
+      addButton.classList.add('disabled');
+      input.classList.remove('is-invalid');
+      break;
+    case 'ready':
+      input.removeAttribute('readonly');
+      addButton.classList.remove('disabled');
+      break;
+    default:
+      break;
+  }
+};
+
+const render = (state, i18nI, path, value) => {
+  const input = document.querySelector('input');
+  const feedback = document.querySelector('.feedback');
+  switch (path) {
+    case 'loadingProcess.status':
+      formloadingProcess(value, feedback, input);
+      if (value === 'ready') {
+        formValidityProcess(state.form.validStatus, input, feedback);
+        feedback.textContent = i18nI.t(`${state.form.feedback}`);
+      }
+      break;
+    case 'posts':
+      renderPosts(state.posts, state.ui.seenPosts, i18nI);
+      break;
+    case 'feeds':
+      renderPosts(state.posts, state.ui.seenPosts, i18nI);
+      renderFeeds(state.feeds, i18nI);
+      break;
+    default:
+      break;
   }
 };
 
