@@ -20,7 +20,6 @@ const parse = (data) => {
 
   const error = xmlDoc.querySelector('parsererror');
   if (error) {
-    console.log(error);
     return {
       parsed: false,
       errName: 'notValidRSSErr',
