@@ -66,7 +66,7 @@ const updatePosts = (state, interval = 5000) => {
         const parseFeedData = parse(response.data.contents).posts;
         const statePostsID = state.posts.map(({ id }) => id);
         const posts = getPosts(parseFeedData, state);
-        const newPosts = posts.filter(({ id }) => !statePostsID.includes(id));
+        const newPosts = posts.filter(({ id }) => statePostsID.includes(id));
         state.posts = [...state.posts, ...newPosts];
       })
       .catch((err) => console.log(err))
@@ -81,8 +81,8 @@ const runApp = () => {
     feeds: [],
     posts: [],
     form: {
-      isValid: true,
-      error: '',
+      validStatus: '',
+      feedback: '',
     },
     loadingProcess: {
       status: '',
@@ -112,37 +112,37 @@ const runApp = () => {
       .then((response) => {
         const parseData = parse(response.data.contents);
         if (!parseData.parsed) {
-          watchedState.form.isValid = false;
-          watchedState.form.error = parseData.errName;
+          watchedState.form.validStatus = 'not valid';
+          watchedState.form.feedback = parseData.errName;
         } else {
           const feed = getFeed(state.feeds.length, parseData, url);
           const posts = getPosts(parseData.posts, state);
           watchedState.feeds.push(feed);
           watchedState.posts = [...state.posts, ...posts];
-          watchedState.form.isValid = true;
+          watchedState.form.validStatus = 'valid';
+          watchedState.form.feedback = 'successRSS';
         }
         watchedState.loadingProcess.status = loadingStatus.READY;
         updatePosts(state);
       })
       .catch((err) => {
-        watchedState.form.isValid = false;
-        watchedState.loadingProcess.status = loadingStatus.READY;
-        console.log(err);
+        watchedState.form.validStatus = 'not valid';
         switch (err.name) {
           case 'AxiosError':
-            watchedState.form.error = 'networkErr';
+            watchedState.form.feedback = 'networkErr';
             break;
           case 'ValidationError':
             if (err.errors[0] === 'notValidLinkErr') {
-              watchedState.form.error = 'notValidLinkErr';
+              watchedState.form.feedback = 'notValidLinkErr';
             } else {
-              watchedState.form.error = 'existRSSErr';
+              watchedState.form.feedback = 'existRSSErr';
             }
             break;
           default:
-            watchedState.form.error = 'unknownErr';
+            watchedState.form.feedback = 'unknownErr';
             break;
         }
+        watchedState.loadingProcess.status = loadingStatus.READY;
       });
   });
 };
