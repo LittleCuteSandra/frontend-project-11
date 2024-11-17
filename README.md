@@ -15,7 +15,7 @@ View a demo: https://frontend-project-11-nine-xi.vercel.app/
 
 #### Run
 
-``` make  ```
+``` make develop ```
 
 #### BUILD
 ``` make build ```
