@@ -132,7 +132,8 @@ const formValidityProcess = (value, input, feedback) => {
 };
 
 const formloadingProcess = (value, feedback, input) => {
-  const addButton = document.querySelector('button[type="submit"]');
+  //const addButton = document.querySelector('button[type="submit"]');
+  const addButton = document.querySelectorAll('button')[3];
   switch (value) {
     case 'loading':
       feedback.textContent = '';
