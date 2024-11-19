@@ -55,7 +55,8 @@ const renderPosts = (posts, seenPosts, i18nI) => {
     a.textContent = post.title;
 
     const button = document.createElement('button');
-    button.setAttribute('type', 'button');
+    //button.setAttribute('type', 'button');
+    button.setAttribute('type', 'submit');
     button.classList.add('btn', 'btn-outline-primary', 'btn-sm');
     button.dataset.id = post.id;
     button.dataset.bsToggle = 'modal';
@@ -132,8 +133,8 @@ const formValidityProcess = (value, input, feedback) => {
 };
 
 const formloadingProcess = (value, feedback, input) => {
-  //const addButton = document.querySelector('button[type="submit"]');
-  const addButton = document.querySelectorAll('button')[3];
+  const addButton = document.querySelector('button[type="submit"]');
+  //const addButton = document.querySelectorAll('button')[3];
   switch (value) {
     case 'loading':
       feedback.textContent = '';
