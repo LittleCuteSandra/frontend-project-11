@@ -53,10 +53,10 @@ const getFeed = (feedsLength, parseData, url) => {
 };
 
 const getPosts = (parseData, state) => parseData.map((post, index) => {
-    const id = state.posts.length + index + 1;
-    const feedID = state.feeds.length + 1;
-    return { id, ...post, feedID };
-  });
+  const id = state.posts.length + index + 1;
+  const feedID = state.feeds.length + 1;
+  return { id, ...post, feedID };
+});
 
 const updatePosts = (state, interval = 5000) => {
   setTimeout(() => {
@@ -66,10 +66,10 @@ const updatePosts = (state, interval = 5000) => {
         const statePostsID = state.posts.map(({ id }) => id);
         const posts = getPosts(parseFeedData, state);
         const newPosts = posts.filter(({ id }) => statePostsID.includes(id));
-        state.posts = [...state.posts, ...newPosts];
+        state.posts.push(...newPosts);
+        //state.posts = [...state.posts, ...newPosts];
       })
-      .catch((err) => console.log(err))
-    );
+      .catch((err) => console.log(err)));
     Promise.all(promises)
       .finally(() => updatePosts(state));
   }, interval);
