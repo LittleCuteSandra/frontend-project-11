@@ -112,7 +112,9 @@ const renderFeeds = (feeds, i18nI) => {
   });
 };
 
-const formValidityProcess = (value, input, feedback) => {
+const formValidityProcess = (value) => {
+  const input = document.querySelector('input');
+  const feedback = document.querySelector('.feedback');
   switch (value) {
     case 'not valid':
       input.classList.add('is-invalid');
@@ -131,9 +133,10 @@ const formValidityProcess = (value, input, feedback) => {
   }
 };
 
-const formloadingProcess = (value, feedback, input) => {
+const formloadingProcess = (value) => {
+  const input = document.querySelector('input');
+  const feedback = document.querySelector('.feedback');
   const addButton = document.querySelector('button[type="submit"]');
-  //const addButton = document.querySelectorAll('button')[3];
   switch (value) {
     case 'loading':
       feedback.textContent = '';
@@ -151,13 +154,12 @@ const formloadingProcess = (value, feedback, input) => {
 };
 
 const render = (state, i18nI, path, value) => {
-  const input = document.querySelector('input');
   const feedback = document.querySelector('.feedback');
   switch (path) {
     case 'loadingProcess.status':
-      formloadingProcess(value, feedback, input);
+      formloadingProcess(value);
       if (value === 'ready') {
-        formValidityProcess(state.form.validStatus, input, feedback);
+        formValidityProcess(state.form.validStatus);
         feedback.textContent = i18nI.t(`${state.form.feedback}`);
       }
       break;

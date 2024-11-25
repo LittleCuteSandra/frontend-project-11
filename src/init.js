@@ -13,7 +13,7 @@ const loadingStatus = {
 };
 
 const validateURL = (url, addedURL) => {
-  let schema = yup.object({
+  const schema = yup.object({
     url: yup.string().url().required().notOneOf(addedURL),
   });
   return schema.validate({ url });
@@ -43,21 +43,20 @@ const createErri18nInstance = () => {
 };
 
 const getFeed = (feedsLength, parseData, url) => {
-  return {
+  const feedData = {
     id: feedsLength + 1,
     title: parseData.title,
     description: parseData.description,
     url,
   };
+  return feedData;
 };
 
-const getPosts = (parseData, state) => {
-  return parseData.map((post, index) => {
+const getPosts = (parseData, state) => parseData.map((post, index) => {
     const id = state.posts.length + index + 1;
     const feedID = state.feeds.length + 1;
     return { id, ...post, feedID };
   });
-};
 
 const updatePosts = (state, interval = 5000) => {
   setTimeout(() => {
