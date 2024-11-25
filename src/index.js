@@ -1,4 +1,5 @@
-import './styles.scss';
+//import './styles.scss';
+import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap';
 import init from './init.js';
 

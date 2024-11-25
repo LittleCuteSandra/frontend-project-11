@@ -55,8 +55,7 @@ const renderPosts = (posts, seenPosts, i18nI) => {
     a.textContent = post.title;
 
     const button = document.createElement('button');
-    //button.setAttribute('type', 'button');
-    button.setAttribute('type', 'submit');
+    button.setAttribute('type', 'button');
     button.classList.add('btn', 'btn-outline-primary', 'btn-sm');
     button.dataset.id = post.id;
     button.dataset.bsToggle = 'modal';
