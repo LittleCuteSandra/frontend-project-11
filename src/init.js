@@ -67,7 +67,6 @@ const updatePosts = (state, interval = 5000) => {
         const posts = getPosts(parseFeedData, state);
         const newPosts = posts.filter(({ id }) => statePostsID.includes(id));
         state.posts.push(...newPosts);
-        //state.posts = [...state.posts, ...newPosts];
       })
       .catch((err) => console.log(err)));
     Promise.all(promises)
